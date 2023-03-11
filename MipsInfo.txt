@@ -1,0 +1,66 @@
+Registrii:
+$0 zero				B"000"
+$1 incrementare			B"001"
+$2 reset reg. rezultat		B"010"
+$3 descompunere			B"011"
+$4 rezultatul scaderilor	B"100"
+$5 registru ADV/FALS		B"101"
+$6 val. const. 7		B"110"
+
+
+Instructiuni:
+
+0 : addi $6, 7($0) 	-- stocam val. 7 pt scaderile repetate
+1 : addi $1, 1($0)      -- $1  = $2 + 1, intializare
+2 : addi $3, 0($1)      -- copiem in 3 val. din reg. $1 
+3 : sub $4, $3, $6	-- $4 = $3 - $6
+4 : bltz $4, $0, 10  	--verificam daca rezultatul scaderii <0, atunci nr. nu e divizibil cu 7, ne intoarcem la incrementare
+5 : beq $4, $0, 6	--daca nr. e divizibil cu 7, ne intoarcem la incrementare
+6 : addi $5, 10($0)	--punem in reg. 5 val 10, echivalenta pentru Adevarat
+7 : sw $5, 0($0)	--stocam val. adv. in memoria RAM
+8 : andi $5, 0($0)	--facem and cu 0, sa resetam registrul 5 unde am stocat rezulatul
+9 : j 1			--ne intoarcem la incrementare
+10 : addi $5, 15($0)	--punem in reg. 5 val 10, echivalenta pentru Fals
+11 : sw $5 , 0($0)	--stocam val. false in memoria RAM
+12 : andi $5, 0($0)	-- facem and cu 0, sa resetam registrul 5 unde am stocat rezulatul
+13 : j 1		--sarim inapoi la instuctiunea 1
+14 : addi $0, 0($0)	-- NOP
+
+Codificare instructiuni: 
+	Instructiuni de tip R:
+		sub : B"000_101_110_100_0_001"	--este instructiunea 3
+			    rs   rt  rd sa func
+		and : B"000_000_010_101_0_100"
+			    rs  rt  rd
+	Instructiuni de tip I:
+		addi : B"001_000_001_0000001"   --instr. 1
+			     rs  rt    1
+		beq  : B"010_100_000_0000101" 	--instr. 5
+
+		bltz : B"011_100_000_0000100"   --instr. 4
+
+		sw   : B"100_000_101_0000000"	--instr.7
+			     rs   rt
+	Instructiuni de tip J:
+		j    : B"111_0000000000001"; 	--instr. 10
+
+Codificarea tutror instr.:
+	0: B"001_000_110_0000111"	H"2307"		0 : addi $6, 7($0) 
+	1: B"001_000_001_0000001"	H"2081"		1 : addi $1, 1($0)
+	2: B"001_011_001_0000000"	H"2C80"		2 : addi $3, 0($1)
+	3: B"000_011_110_100_1_001"	H"0F49"		3 : sub $4, $3, $6
+	4: B"101_101_000_0000100"	H"B404"		4 : bltz $4, $0, 9  
+	5: B"100_100_000_0000110"	H"9006"		5 : beq $4, $0, 6
+	6: B"001_000_101_0001010"	H"228A"		6 : addi $5, 10($0)
+	7: B"011_000_101_0000000"	H"6280"		7 : sw $5, 0($0)
+        8: B"110_000_101_0000000"	H"C280"		8 : andi $5, 0($0)
+	9: B"111_0000000000001"		H"E001"		9 : j 1
+       10: B"001_000_101_0001111"	H"228F"		10 : addi $5, 15($0)
+       11: B"011_000_101_0000000"	H"6280"		11 : sw $5 , 0($0)
+       --11: B"000_000_010_101_0_100"	H"0154"		11 : and $5, $0, $2
+       12: B"110_000_101_0000000"	H"C280"		12 : andi $5, 0($0)
+       13: B"111_0000000000001"		H"E001"		13 : j 1
+       14: B"001_000_000_0000000"	H"2000"		14 : addi $0, 0($0)
+
+Idei : 
+Scoatem inca un semnal din ALU pentru (<0), si facem sau intre ZERO si LESSTHANZERO (ZERO | LESSTHANZERO).
